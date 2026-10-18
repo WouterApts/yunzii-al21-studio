@@ -130,6 +130,24 @@ main > .card:first-child { position: sticky; top: 24px; }
 .layer-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; color: var(--muted); font-size: 13px; height: 40px; }
 .profile-action { display: flex; align-items: center; flex: none; white-space: nowrap; }
 .layer-bar input.profile-name { flex: 1; width: 0; min-width: 0; padding: 6px 10px; font: inherit; color: var(--ink); }
+.profile-files { position: relative; flex: none; }
+.profile-files summary { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); cursor: pointer; list-style: none; }
+.profile-files summary::-webkit-details-marker { display: none; }
+.profile-files summary:hover, .profile-files[open] summary { background: var(--accent-soft); }
+.profile-files summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.profile-files summary .ico:last-child { width: 12px; }
+.profile-file-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; width: 190px; padding: 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: 0 8px 24px rgb(0 0 0 / .15); }
+.profile-file-menu button { display: flex; align-items: center; gap: 9px; width: 100%; border: 0; background: transparent; text-align: left; padding: 10px; }
+.profile-file-menu button:hover { background: var(--accent-soft); }
+.profile-transfer-summary { margin: 16px 0; padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; overflow-wrap: anywhere; }
+.profile-transfer-summary strong { display: block; margin-bottom: 5px; }
+.profile-transfer-option { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0; cursor: pointer; }
+.profile-transfer-option input { margin: 3px 0 0; accent-color: var(--accent); }
+.profile-transfer-option strong, .profile-transfer-option small { display: block; }
+.profile-transfer-option strong { font-size: 13px; font-weight: 500; }
+.profile-transfer-option small { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.profile-transfer-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.profile-transfer-error { color: var(--danger); font-size: 13px; }
 
 .pad { position: relative; margin: 0 auto; }
 .key { position: absolute; border: 1px solid var(--key-edge); border-radius: 9px; background: var(--key); box-shadow: 0 2px 0 var(--key-shadow);
@@ -537,7 +555,7 @@ class AL21 {
     return bytes;
   }
   writeMacro(slot, buf) {
-    const n = [0, 1, 2, 3, 4].filter((p) => buf.slice(p * 56, p * 56 + 56).some(Boolean)).length;
+    const n = Math.max(1, [0, 1, 2, 3, 4].filter((p) => buf.slice(p * 56, p * 56 + 56).some(Boolean)).length);
     const frames = [];
     for (let p = 0; p < n; p++) {
       const f = new Uint8Array(64);
@@ -694,6 +712,10 @@ const ICONS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M8 13h8M8 17h6"/>',
+  chevronDown: '<path d="m6 9 6 6 6-6"/>',
+  importFile: '<path d="M14 2H6a2 2 0 0 0-2 2v5M4 17v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6"/><path d="M14 2v4a2 2 0 0 0 2 2h4M2 13h11m-4-4 4 4-4 4"/>',
+  exportFile: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3M20 8l-6-6"/><path d="M14 2v4a2 2 0 0 0 2 2h4M11 13h11m-4-4 4 4-4 4"/>',
   grip: '<path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01"/>',
   expand: '<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>',
   collapse: '<path d="M3 8h5V3M21 8h-5V3M8 21v-5H3M16 21v-5h5"/>',
@@ -955,6 +977,258 @@ function setActiveProfile(p) {
 }
 
 // ---------------------------------------------------------------------------
+// Profile files
+// ---------------------------------------------------------------------------
+function profileBytes(value, length, label) {
+  if (!Array.isArray(value) || value.length !== length || value.some(b => !Number.isInteger(b) || b < 0 || b > 255)) throw new Error(`Invalid ${label}.`);
+  return value.slice();
+}
+function profileMacroBytes(value) {
+  const bytes = profileBytes(Array.from(value), MACRO_BYTES, 'macro data');
+  let end = 2;
+  while (end < MACRO_BYTES && bytes[end]) {
+    const code = bytes[end];
+    if (code === 249) end += bytes[end + 1] ? 4 : 6;
+    else {
+      if (code < 4 || code > 244) throw new Error('The profile contains an unsupported macro event.');
+      end += bytes[end + 1] & 127 ? 2 : 4;
+    }
+    if (end > MACRO_BYTES - 4) throw new Error('The profile contains a truncated or oversized macro.');
+  }
+  // Device slots may have unused bytes left after the terminator.
+  return [...bytes.slice(0, end), ...Array(MACRO_BYTES - end).fill(0)];
+}
+function profileMacroRefs(map) {
+  const refs = new Set();
+  for (let i = 0; i < map.length; i += 4) if (map[i] === 9) refs.add(map[i + 2]);
+  return refs;
+}
+function parseProfileFile(text) {
+  if (text.length > 1024 * 1024) throw new Error('Profile files must be smaller than 1 MB.');
+  let data;
+  try { data = JSON.parse(text.replace(/^\uFEFF/, '')); } catch { throw new Error('This file is not valid JSON.'); }
+  if (!data || data.format !== 'al21-studio-profile' || data.version !== 1 || data.device !== 'YUNZII AL21') throw new Error('Choose an AL21 Studio profile file (version 1).');
+  if (typeof data.name !== 'string' || data.name.length > 200) throw new Error('Invalid profile name.');
+  const result = { format: data.format, version: 1, device: data.device, name: data.name.trim(), map: profileBytes(data.map, 256, 'profile key assignments') };
+  if (data.fn !== undefined) result.fn = profileBytes(data.fn, 256, 'Fn key assignments');
+  if (!Array.isArray(data.macros) || data.macros.length > MACRO_SLOTS) throw new Error('Invalid profile macros.');
+  const ids = new Set();
+  result.macros = data.macros.map(m => {
+    if (!m || !Number.isInteger(m.id) || m.id < 0 || m.id >= MACRO_SLOTS || ids.has(m.id) || typeof m.name !== 'string' || m.name.length > 200) throw new Error('Invalid or duplicate macro in the profile.');
+    ids.add(m.id);
+    return { id: m.id, name: m.name, bytes: profileMacroBytes(profileBytes(m.bytes, MACRO_BYTES, 'macro data')) };
+  });
+  for (const map of [result.map, result.fn].filter(Boolean)) {
+    for (let i = 0; i < map.length; i += 4) if (map[i] === 9 && (!ids.has(map[i + 2]) || map[i + 1] > 2)) throw new Error('A key refers to a missing or invalid macro.');
+  }
+  if (data.lighting !== undefined) {
+    const l = data.lighting?.settings;
+    if (!l || !EFFECTS.some(e => e.mode === l.mode) || !Number.isInteger(l.speed) || l.speed < 0 || l.speed > 4 || !Number.isInteger(l.bright) || l.bright < 0 || l.bright > 4 || !Number.isInteger(l.option) || l.option < 0 || l.option >= (effectOf(l.mode).options?.length || 1) || typeof l.rainbow !== 'boolean' || !Number.isInteger(l.rgb) || l.rgb < 0 || l.rgb > 0xffffff) throw new Error('Invalid lighting settings.');
+    if (!Array.isArray(data.lighting.patterns) || data.lighting.patterns.length !== 5) throw new Error('The lighting section must contain all five custom patterns.');
+    result.lighting = { settings: { mode: l.mode, speed: l.speed, bright: l.bright, option: l.option, rainbow: l.rainbow, rgb: l.rgb },
+      patterns: data.lighting.patterns.map(p => profileBytes(p, PICTURE_BYTES, 'custom lighting pattern')) };
+  }
+  return result;
+}
+function planProfileImport(data, target, maps, options) {
+  if (!Number.isInteger(target) || target < 0 || target >= PROFILES) throw new Error('Choose a valid destination profile.');
+  const replacements = { [target]: data.map.slice() };
+  if (options.fn && data.fn) replacements.fn = data.fn.slice();
+  const protectedSlots = new Set(), allUsed = new Set(), needed = new Set();
+  for (const layer of layers()) {
+    if (!maps[layer] || maps[layer].length !== 256) throw new Error('Read all profiles before importing.');
+    for (const slot of profileMacroRefs(maps[layer])) {
+      allUsed.add(slot);
+      if (!Object.hasOwn(replacements, layer)) protectedSlots.add(slot);
+    }
+  }
+  Object.values(replacements).forEach(map => profileMacroRefs(map).forEach(slot => needed.add(slot)));
+  const available = Array.from({ length: MACRO_SLOTS }, (_, i) => i).filter(i => !protectedSlots.has(i)).sort((a, b) => Number(allUsed.has(a)) - Number(allUsed.has(b)) || a - b);
+  if (available.length < needed.size) throw new Error('Not enough macro slots are available without changing macros used by other profiles.');
+  const remap = new Map([...needed].map((id, i) => [id, available[i]]));
+  for (const map of Object.values(replacements)) for (let i = 0; i < map.length; i += 4) if (map[i] === 9) map[i + 2] = remap.get(map[i + 2]);
+  return { maps: replacements, macros: data.macros.filter(m => needed.has(m.id)).map(m => ({ ...m, slot: remap.get(m.id) })), lighting: options.lighting ? data.lighting : null };
+}
+async function readProfileMaps(kb, guard = () => {}) {
+  const maps = {};
+  for (const layer of layers()) { guard(); maps[layer] = await kb.readMap(layer); }
+  guard();
+  return maps;
+}
+async function buildProfileFile(kb, target, name, options, guard = () => {}) {
+  guard();
+  const data = { format: 'al21-studio-profile', version: 1, device: 'YUNZII AL21', name, map: [...await kb.readMap(target)], macros: [] };
+  if (options.fn) { guard(); data.fn = [...await kb.readMap('fn')]; }
+  const refs = new Set([...profileMacroRefs(data.map), ...profileMacroRefs(data.fn || [])]);
+  for (const id of refs) { guard(); data.macros.push({ id, name: macroName(id), bytes: profileMacroBytes(await kb.readMacro(id)) }); }
+  if (options.lighting) {
+    guard();
+    data.lighting = { settings: await kb.getLight(), patterns: [] };
+    for (let i = 0; i < 5; i++) { guard(); data.lighting.patterns.push((await kb.readPicture(i)).slice(0, PICTURE_BYTES)); }
+  }
+  guard();
+  return parseProfileFile(JSON.stringify(data));
+}
+function profileLightMatches(actual, expected) {
+  if (actual.mode !== expected.mode) return false;
+  if (expected.mode === 0) return true;
+  const effect = effectOf(expected.mode);
+  return actual.bright === expected.bright && (!effect.speed || actual.speed === expected.speed) && (!effect.options || actual.option === expected.option) &&
+    (!effect.color || (actual.rainbow === expected.rainbow && (expected.rainbow || actual.rgb === expected.rgb)));
+}
+async function applyProfileFile(kb, data, target, options, guard = () => {}, progress = () => {}) {
+  progress('Reading the current profiles…');
+  const maps = await readProfileMaps(kb, guard), plan = planProfileImport(data, target, maps, options);
+  const oldMacros = new Map(), oldPatterns = [], undo = [];
+  for (const m of plan.macros) { guard(); oldMacros.set(m.slot, profileMacroBytes(await kb.readMacro(m.slot))); }
+  let oldLight;
+  if (plan.lighting) {
+    guard(); oldLight = await kb.getLight();
+    for (let i = 0; i < 5; i++) { guard(); oldPatterns.push((await kb.readPicture(i)).slice(0, PICTURE_BYTES)); }
+  }
+  const writeMacro = async (slot, bytes) => {
+    guard(); await kb.writeMacro(slot, bytes); guard();
+    if (!eq(profileMacroBytes(await kb.readMacro(slot)), bytes)) throw new Error('The numpad did not store an imported macro correctly.');
+  };
+  const writePicture = async (slot, bytes) => {
+    guard(); await kb.writePicture(slot, bytes); guard();
+    if (!eq((await kb.readPicture(slot)).slice(0, PICTURE_BYTES), bytes)) throw new Error('The numpad did not store an imported pattern correctly.');
+  };
+  const writeLight = async light => {
+    guard(); await kb.setLight(light);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      guard(); if (profileLightMatches(await kb.getLight(), light)) return;
+      if (attempt < 3) await sleep(120);
+    }
+    throw new Error('The numpad did not apply the imported lighting.');
+  };
+  try {
+    progress('Saving imported macros…');
+    for (const m of plan.macros) {
+      undo.push(() => writeMacro(m.slot, oldMacros.get(m.slot)));
+      await writeMacro(m.slot, m.bytes);
+    }
+    for (const [layer, next] of Object.entries(plan.maps)) {
+      const key = layer === 'fn' ? 'fn' : Number(layer), before = [...maps[layer]];
+      const changed = Array.from({ length: 64 }, (_, i) => i).filter(i => !eq(before.slice(i * 4, i * 4 + 4), next.slice(i * 4, i * 4 + 4)));
+      if (!changed.length) continue;
+      progress(key === 'fn' ? 'Saving the shared Fn layer…' : `Saving Profile ${target + 1}…`);
+      undo.push(async () => {
+        for (const slot of changed) { guard(); await kb.writeKey(key, slot, before.slice(slot * 4, slot * 4 + 4)); }
+        guard(); if (!eq(await kb.readMap(key), before)) throw new Error('Could not restore key assignments.');
+      });
+      for (const slot of changed) { guard(); await kb.writeKey(key, slot, next.slice(slot * 4, slot * 4 + 4)); }
+      guard(); if (!eq(await kb.readMap(key), next)) throw new Error('The numpad did not store the imported key assignments correctly.');
+    }
+    if (plan.lighting) {
+      progress('Saving shared lighting…');
+      // Restore the effect after restoring its patterns if any later write fails.
+      undo.push(() => writeLight(oldLight));
+      for (let i = 0; i < 5; i++) {
+        if (eq(oldPatterns[i], plan.lighting.patterns[i])) continue;
+        undo.push(() => writePicture(i, oldPatterns[i]));
+        await writePicture(i, plan.lighting.patterns[i]);
+      }
+      await writeLight(plan.lighting.settings);
+    }
+    guard();
+  } catch (error) {
+    progress('Restoring the previous settings…');
+    let restored = true;
+    for (const restore of undo.reverse()) { try { await restore(); } catch { restored = false; } }
+    throw new Error(`${error.message} ${restored ? 'Previous settings were restored.' : 'Some changes may remain. Reconnect and reload the numpad before trying again.'}`);
+  }
+  return { maps: { ...maps, ...Object.fromEntries(Object.entries(plan.maps).map(([layer, map]) => [layer, Uint8Array.from(map)])) }, macros: plan.macros };
+}
+
+function profileFileMenu(target) {
+  const file = h('input', { type: 'file', accept: '.json,application/json', hidden: true });
+  const menu = h('details', { class: 'profile-files' },
+    h('summary', { title: 'Import / export profile', ariaLabel: 'Import / export profile' }, icon('file'), icon('chevronDown')),
+    h('div', { class: 'profile-file-menu' },
+      h('button', { type: 'button', onclick: () => { menu.open = false; file.value = ''; file.click(); } }, icon('importFile'), 'Import profile…'),
+      h('button', { type: 'button', onclick: () => { menu.open = false; openProfileTransfer(target); } }, icon('exportFile'), 'Export profile…')), file);
+  file.onchange = async () => {
+    const selected = file.files[0], kb = state.kb;
+    if (!selected) return;
+    try {
+      if (selected.size > 1024 * 1024) throw new Error('Profile files must be smaller than 1 MB.');
+      const data = parseProfileFile(await selected.text());
+      if (!kb || kb !== state.kb || target !== state.layer) throw new Error('The selected profile changed. Choose the file again.');
+      openProfileTransfer(target, data);
+    } catch (error) { toast(error.message, 'err'); }
+  };
+  menu.onkeydown = ev => { if (ev.key === 'Escape') { menu.open = false; menu.querySelector('summary').focus(); } };
+  return menu;
+}
+document.addEventListener('click', ev => {
+  document.querySelectorAll('.profile-files[open]').forEach(menu => { if (!menu.contains(ev.target)) menu.open = false; });
+});
+function openProfileTransfer(target, data = null) {
+  if (!state.kb || document.querySelector('.profile-transfer')) return;
+  if (recording) return toast('Stop recording before importing or exporting a profile.');
+  stopKeyCapture();
+  const kb = state.kb, importing = !!data;
+  let working = false;
+  const guard = () => { if (state.kb !== kb) throw new Error('The connected numpad changed.'); };
+  const fn = h('input', { type: 'checkbox' }), lighting = h('input', { type: 'checkbox' });
+  const error = h('p', { class: 'profile-transfer-error', role: 'alert' });
+  const status = h('p', { class: 'hint', role: 'status', ariaLive: 'polite' });
+  const close = () => { if (!working) dialog.close(); };
+  const option = (input, label, detail) => h('label', { class: 'profile-transfer-option' }, input, h('span', {}, h('strong', {}, label), h('small', {}, detail)));
+  const count = data ? ALL_KEYS.filter(k => data.map.slice(k.slot * 4, k.slot * 4 + 4).some(Boolean)).length : 0;
+  const submit = h('button', { type: 'button', class: 'primary', onclick: async () => {
+    if (working) return;
+    working = true; controls.disabled = true; closeButton.disabled = true; error.textContent = '';
+    const options = { fn: fn.checked, lighting: lighting.checked };
+    try {
+      guard(); await flushLight(); guard();
+      if (importing) {
+        const result = await applyProfileFile(kb, data, target, options, guard, text => { status.textContent = text; });
+        state.maps = result.maps; state.layer = target; state.sel = null; state.macroDraft = null; state.keyDraft = null;
+        const names = profileNames(); names[target] = data.name || `Profile ${target + 1}`; store.set('al21.profileNames', names);
+        const macros = macroNames(); result.macros.forEach(m => { macros[m.slot] = m.name || `Macro ${m.slot + 1}`; }); store.set('al21.macroNames', macros);
+        if (options.lighting && data.lighting) { state.light = { ...data.lighting.settings }; state.picture = null; }
+        toast(`Imported into Profile ${target + 1}.`, 'ok');
+      } else {
+        status.textContent = 'Reading the saved profile…';
+        const output = await buildProfileFile(kb, target, profileName(target), options, guard);
+        const blob = new Blob([JSON.stringify(output, null, 2) + '\n'], { type: 'application/json' });
+        const url = URL.createObjectURL(blob), filename = (output.name.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'profile') + '.al21.json';
+        const link = h('a', { href: url, download: filename });
+        document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast('Profile exported.', 'ok');
+      }
+      working = false; dialog.close(); render();
+    } catch (err) {
+      error.textContent = err.message; status.textContent = '';
+      if (importing && state.kb === kb) {
+        try {
+          state.maps = await readProfileMaps(kb, guard);
+          if (options.lighting && data.lighting) { state.light = await kb.getLight(); state.picture = null; }
+        } catch { /* Keep the error visible if disconnected. */ }
+        render();
+      }
+    } finally { working = false; controls.disabled = false; closeButton.disabled = false; }
+  } }, importing ? `Import into Profile ${target + 1}` : 'Export profile');
+  const controls = h('fieldset', { class: 'advanced-controls' },
+    h('p', { class: 'hint' }, importing ? `Replace the saved key assignments and name in Profile ${target + 1} (${profileName(target)}). Assigned macros are included.` : 'Export the profile name, saved key assignments, and assigned macros to a file.'),
+    importing ? h('div', { class: 'profile-transfer-summary' }, h('strong', {}, data.name || 'Unnamed profile'),
+      h('span', { class: 'hint' }, `${count} assigned inputs · ${profileMacroRefs(data.map).size} macros`)) : null,
+    !importing || data.fn ? option(fn, 'Include shared Fn layer', 'Applies to all three profiles.') : null,
+    !importing || data.lighting ? option(lighting, 'Include shared lighting', 'Includes the effect and all five saved custom patterns. Applies to all profiles.') : null,
+    importing && !Array.from({ length: 64 }, (_, i) => data.map.slice(i * 4, i * 4 + 4)).some(v => eq(v, [10, 1, 0, 0])) ? h('p', { class: 'hint' }, 'This profile has no Fn key assigned.') : null,
+    !importing ? h('p', { class: 'hint' }, 'Only settings saved to the numpad are exported.') : null,
+    h('div', { class: 'profile-transfer-actions' }, h('button', { type: 'button', onclick: close }, 'Cancel'), submit));
+  const closeButton = h('button', { type: 'button', class: 'advanced-close', ariaLabel: 'Close profile transfer', onclick: close }, icon('close'));
+  const dialog = h('dialog', { class: 'advanced-popup profile-transfer', ariaLabel: importing ? 'Import profile' : `Export ${profileName(target)}`,
+    oncancel: ev => { if (working) ev.preventDefault(); }, onclose: () => { dialog.remove(); $('layerBar').querySelector('.profile-files summary')?.focus(); } },
+    h('div', { class: 'advanced-popup-head' }, h('h2', { id: 'profileTransferTitle' }, importing ? 'Import profile' : `Export ${profileName(target)}`), closeButton),
+    h('div', { class: 'advanced-body' }, controls, status, error));
+  document.body.append(dialog); dialog.showModal();
+}
+
+// ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
 const SCALE = 2;
@@ -1019,6 +1293,7 @@ function render() {
   else bar.replaceChildren(
     h('span', { class: 'profile-action' }, state.layer === state.active ? 'This profile is active.' : h('button', { class: 'primary', onclick: () => setActiveProfile(state.layer) }, 'Activate')),
     profileNameInput(state.layer),
+    profileFileMenu(state.layer),
   );
   // Pad
   const pad = $('pad');

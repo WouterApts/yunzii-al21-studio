@@ -21,7 +21,7 @@ Install **Node.js** and use desktop **Chrome or Edge**.
 
 ## Features
 
-- **Three profiles:** edit profiles and use **Activate** to switch between them.
+- **Three profiles:** edit profiles and use **Activate** to switch between them. Use the file menu beside the profile name to import or export a profile.
 - **Keys and knob:** assign keys, shortcuts, media controls, mouse buttons, or macros, or disable an input. Double-click a keycap or knob input to capture a key or shortcut.
 - **Fn layer:** edit the shared Fn layer and see which inputs act as Fn in the active profile.
 - **Macros:** record macros or import them in QMK format, then assign them to your chosen keys.
