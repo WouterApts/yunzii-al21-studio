@@ -6,6 +6,7 @@ const { spawn } = require('child_process');
 
 const PORT = Number(process.env.PORT) || 8421;
 const page = path.join(__dirname, 'index.html');
+const fonts = path.join(__dirname, 'fonts');
 const url = `http://localhost:${PORT}`;
 const shouldOpen = process.argv.includes('--open');
 
@@ -38,6 +39,13 @@ function reportError(error) {
 
 http
   .createServer((req, res) => {
+    // Bundled fonts are served by exact file name only, so no path can escape the folder.
+    const font = /^\/fonts\/([a-z-]+\.woff2)$/.exec(req.url);
+    if (font && fs.existsSync(path.join(fonts, font[1]))) {
+      res.writeHead(200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'max-age=86400' });
+      fs.createReadStream(path.join(fonts, font[1])).pipe(res);
+      return;
+    }
     if (req.url !== '/' && req.url !== '/index.html') {
       res.writeHead(404).end();
       return;

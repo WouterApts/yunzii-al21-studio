@@ -30,6 +30,20 @@ Install **Node.js** and use desktop **Chrome or Edge**.
 
 Key assignments, macros, lighting, and advanced settings are saved to the numpad. Profile names, macro names, and interface preferences are stored in your browser.
 
+## Preview
+
+**Key and shortcut assignments**
+
+![Key and shortcut editor with the AL21 numpad layout](preview/Preview%201.png)
+
+**Fn layer and macros**
+
+![Fn layer and macro sequence editor](preview/Preview%202.png)
+
+**Custom lighting patterns**
+
+![Custom lighting effects, color palette, and image import and export](preview/Preview%203.png)
+
 ## Connection support
 
 The app has been developed with an AL21 using its 2.4 GHz receiver. USB cable support is implemented but has not been verified on hardware. Configuration over Bluetooth is not supported; Bluetooth sleep timers can be configured through the receiver.
@@ -40,6 +54,8 @@ Firefox and Safari are not supported because the app requires WebHID. If the dev
 
 - `index.html` - the complete browser app, including embedded graphics.
 - `serve.js` - a small local server using only Node.js built-in modules.
+- `fonts/` - bundled interface fonts and their licenses.
+- `preview/` - screenshots of key assignments, macros, and lighting.
 - `Start AL21 Studio.cmd` - a double-click Windows launcher for local use.
 - `.nojekyll` - tells GitHub Pages to serve the files directly.
 
