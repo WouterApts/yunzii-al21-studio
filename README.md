@@ -1,6 +1,7 @@
 ﻿# AL21 Studio
 
-A vibe-coded browser app for the **YUNZII AL21** numpad. Remap keys and the knob, record macros, customize lighting, and adjust other settings from your browser.
+A vibe-coded browser app for the **YUNZII AL21** numpad. 
+Allows you to remap keys, configure the knob, record macros, customize lighting, and adjust other settings from your browser.
 
 ## Use it through GitHub Pages
 
@@ -32,15 +33,9 @@ Key assignments, macros, lighting, and advanced settings are saved to the numpad
 
 ## Preview
 
-**Key and shortcut assignments**
-
 ![Key and shortcut editor with the AL21 numpad layout](preview/Preview%201.png)
 
-**Fn layer and macros**
-
 ![Fn layer and macro sequence editor](preview/Preview%202.png)
-
-**Custom lighting patterns**
 
 ![Custom lighting effects, color palette, and image import and export](preview/Preview%203.png)
 
