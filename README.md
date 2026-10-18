@@ -46,6 +46,35 @@ The browser can reconnect automatically after you grant device access. The onlin
 
 Key assignments, macros, lighting, and advanced settings are saved to the numpad. Profile names, macro names, and interface preferences are stored in this browser.
 
+## Import and export macros
+
+The macro editor's **Sequence** table shows each key, its press/release action, the **Delay before** that event, and its time from the start of playback. The first event defaults to **0 ms**, with an editable start delay. A separate **End delay** controls the pause after the final event, useful between repeats; newly recorded or added sequences default to no end delay. Drag a row's dots to change the key order, or focus the dots and use the arrow keys; each event carries its before-delay with it, including when moved to the first position. The end delay stays at the end. Editing or moving a step updates the times automatically. Use **Expand** to show every step and scroll with the page; **Collapse** returns to the compact table.
+
+In the macro editor, **Import QMK** reads the `macros` field from a QMK `keymap.json` file or a macro-only JSON file. If the file contains multiple macros, choose one and click **Load macro**. Importing creates a new draft; review it and click **Save Macro to key** to write it to the numpad.
+
+**Export QMK** downloads the current macro's steps and delays in the same QMK structure:
+
+```json
+{
+  "macros": [
+    [
+      { "action": "down", "keycodes": ["LCTL"] },
+      { "action": "delay", "duration": 20 },
+      { "action": "tap", "keycodes": ["C"] },
+      { "action": "up", "keycodes": ["LCTL"] }
+    ]
+  ]
+}
+```
+
+The format follows [QMK's JSON macro specification](https://docs.qmk.fm/feature_macros#using-macros-in-json-keymaps). Exports contain the `macros` field only, ready to copy into an existing QMK keymap; they are not complete keyboard configurations or firmware files. Keycodes use QMK names without the `KC_` prefix. Imports also accept that prefix.
+
+Supported actions are `down`, `up`, `tap` (including chords), and `delay`, including a delay before the first key. Common keyboard keys, modifiers, numpad keys, F1–F24, and mouse buttons 1–5 are supported. ASCII text imports use the US keyboard layout; text from other declared host layouts is rejected. Beeps, mouse movement, and firmware-specific keycodes are not supported in QMK import/export. Unsupported steps produce an error instead of being discarded.
+
+Delays range from 0 to 65,535 ms, with a 252-byte macro limit. The app translates the before-event display to the device's after-event timing format. Zero delays use explicit 16-bit timing fields. A nonzero start delay adds a zero-displacement mouse event followed by the requested pause, costing six bytes. This follows the vendor driver packet format; start-delay playback timing has not yet been verified on physical hardware. QMK files represent it as an ordinary leading `delay` action.
+
+QMK's macro arrays do not include names, repeat counts, or toggle/hold playback settings. Export includes one pass through the steps. Import starts with **Play N times: 1**, using the filename as the draft name. Choose the playback settings before saving.
+
 ## Connection support
 
 The app has been developed with an AL21 using its 2.4 GHz receiver. USB cable support is implemented but has not been verified on hardware. Configuration over Bluetooth is not supported; Bluetooth sleep timers can be configured through the receiver.

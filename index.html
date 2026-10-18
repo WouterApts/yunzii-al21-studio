@@ -94,7 +94,7 @@ header .spacer { flex: 1; }
 
 main { display: grid; grid-template-columns: 480px minmax(340px, 1fr); align-items: start; gap: 24px; padding: 24px; max-width: 1200px; margin: 0 auto; }
 main > .card:first-child { position: sticky; top: 24px; }
-@media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { main { grid-template-columns: 1fr; } main > .card:first-child { position: static; } }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
 .advanced-popup { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); margin: auto; padding: 22px; overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); box-shadow: 0 20px 70px rgb(0 0 0 / .3); }
 .advanced-popup::backdrop { background: rgb(0 0 0 / .45); backdrop-filter: blur(3px); }
@@ -167,6 +167,7 @@ main > .card:first-child { position: sticky; top: 24px; }
 .knob-legend { margin-top: 37px; font-size: 13px; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
 .knob-legend b { color: var(--ink); font-weight: 600; }
 
+.editor { min-width: 0; }
 .editor h2 { font-size: 16px; margin: 0 0 2px; }
 .editor .current { color: var(--muted); margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; overflow-wrap: anywhere; }
 .editor .current-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; }
@@ -206,12 +207,65 @@ button.link:hover { text-decoration: underline; }
 .hint { color: var(--muted); font-size: 13px; }
 .empty-state { color: var(--muted); padding: 40px 0; text-align: center; }
 
-.macro-list { border: 1px solid var(--line); border-radius: 10px; max-height: 260px; overflow: auto; scrollbar-gutter: stable; margin-bottom: 12px; }
-.macro-list table { width: 100%; border-collapse: collapse; }
-.macro-list td { padding: 4px 8px; border-bottom: 1px solid var(--line); }
-.macro-list tr:last-child td { border-bottom: none; }
-.macro-list input { width: 76px; }
-.macro-list .x { border: none; padding: 2px 6px; color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.macro-controls { display: grid; grid-template-columns: minmax(0, max-content) minmax(max-content, 1fr); column-gap: 16px; align-items: center; }
+.macro-name-row { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; contain: inline-size; }
+.macro-name-row select, .macro-name-row input { min-width: 0; width: 100%; }
+.macro-import { justify-self: end; white-space: nowrap; }
+.macro-record-row { grid-column: 1; margin-top: 24px; }
+.macro-import-options, .macro-import-hint { grid-column: 1 / -1; margin-top: 12px; }
+.macro-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.macro-save-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.macro-footer button { flex: none; white-space: nowrap; }
+@media (max-width: 480px) {
+  .macro-controls { grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; }
+  .macro-name-row { grid-template-columns: minmax(0, 1fr); }
+  .macro-record-row { grid-column: 1 / -1; }
+}
+.macro-sequence { border: 1px solid var(--line); border-radius: 12px; margin: 16px 0; }
+.macro-sequence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--line); }
+.macro-sequence-head h3 { margin: 0 0 2px; font-size: 14px; font-weight: 600; }
+.macro-summary { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.macro-expand { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 5px 8px; font-size: 12px; }
+.macro-expand .ico { width: 14px; height: 14px; }
+.macro-list { max-height: 320px; overflow: auto; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
+.macro-sequence.expanded .macro-list { max-height: none; overflow: visible; scrollbar-gutter: auto; overscroll-behavior-y: auto; }
+.macro-list table { width: 100%; min-width: 440px; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 13px; }
+.macro-list th { position: sticky; top: 0; z-index: 1; background: var(--bg); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .03em; text-align: left; padding: 9px 7px; border-bottom: 1px solid var(--line); }
+.macro-list td { padding: 9px 7px; height: 49px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.macro-list tbody tr:last-child td { border-bottom: 0; }
+.macro-list .macro-empty td { height: 116px; padding: 24px 16px; text-align: center; color: var(--muted); }
+.macro-empty strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 13px; font-weight: 500; }
+.macro-list tbody tr:not(.macro-empty):hover { background: color-mix(in srgb, var(--accent-soft) 35%, var(--panel)); }
+.macro-list tr.dragging { background: var(--accent-soft); opacity: .5; }
+.macro-list tr.drop-before td { box-shadow: inset 0 2px var(--accent); }
+.macro-list tr.drop-after td { box-shadow: inset 0 -2px var(--accent); }
+.macro-step-col { width: 58px; }
+.macro-time-col { width: 80px; }
+.macro-delay-col { width: 106px; }
+.macro-remove-col { width: 34px; }
+.macro-step { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.macro-grip { display: grid; place-items: center; padding: 3px 0; width: 22px; height: 28px; flex: none; border: 0; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
+.macro-grip:hover:not(:disabled), .macro-grip:focus-visible { color: var(--accent); background: var(--accent-soft); }
+.macro-grip:active { cursor: grabbing; }
+.macro-grip .ico { width: 16px; height: 16px; }
+.macro-key { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 28px; max-width: 100%; padding: 3px 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--key); box-shadow: 0 1px 0 var(--key-edge); font: inherit; font-size: 12px; font-weight: 500; text-align: center; overflow-wrap: anywhere; }
+.macro-event { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.macro-event .macro-key { min-width: 36px; flex: 0 1 auto; }
+.macro-action { display: inline-flex; align-items: center; gap: 4px; flex: none; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.macro-action.press { color: var(--accent); }
+.macro-action .ico { width: 13px; height: 13px; }
+.macro-at, .macro-end-at { font: 11px/1.4 ui-monospace, Consolas, monospace; color: var(--muted); white-space: nowrap; }
+.macro-delay { display: flex; align-items: center; gap: 5px; }
+.macro-delay input { width: 67px; min-width: 0; padding: 5px 4px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; }
+.macro-delay span { color: var(--muted); font-size: 11px; }
+.macro-remove { display: grid; place-items: center; width: 22px; height: 28px; padding: 3px; border: 0; color: var(--muted); background: transparent; }
+.macro-remove:hover:not(:disabled) { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, var(--panel)); }
+.macro-remove .ico { width: 14px; height: 14px; }
+.macro-list tfoot td { border-top: 1px solid var(--line); border-bottom: 0; color: var(--muted); font-size: 12px; }
+@media (max-width: 1100px) and (min-width: 1001px), (max-width: 540px) {
+  .macro-sequence.expanded .macro-list { overflow-x: auto; }
+}
 .rec { color: var(--danger); font-weight: 600; }
 .bytes { font-size: 12px; color: var(--muted); }
 
@@ -477,7 +531,8 @@ class AL21 {
     for (let page = 0; page < 4; page++) {
       const r = await this.command([0x8b, slot, page]);
       bytes = bytes.concat([...r]);
-      if (hasZeroRun(r)) break;
+      // Zero timing fields can contain runs of zero bytes inside a valid macro.
+      // Read the full slot; decodeMacro finds the end at an event boundary.
     }
     return bytes;
   }
@@ -493,16 +548,20 @@ class AL21 {
     return this.writePages(frames);
   }
 }
-const hasZeroRun = (a) => { for (let i = 0; i + 3 < a.length; i++) if (!a[i] && !a[i + 1] && !a[i + 2] && !a[i + 3]) return true; return false; };
 
 // Macro format: [repeat lo, repeat hi] then per action [code, flags(, delay lo, delay hi)].
-// flags bit7 = key down; low 7 bits = delay after the action (1..127 ms), or 0 = 16-bit delay follows.
+// flags bit7 = key down; low 7 bits = delay after the action (1..127 ms), or 0 = 16-bit delay follows (including zero).
 const MOUSE_CODES = { 240: 'Left click', 241: 'Right click', 242: 'Middle click', 243: 'Back', 244: 'Forward' };
-function encodeMacro(events, repeat) {
+function encodeMacro(events, repeat, startDelay = 0) {
   const out = [repeat & 255, repeat >> 8];
+  if (!Number.isInteger(startDelay) || startDelay < 0 || startDelay > 65535) throw new Error('Start delay must be between 0 and 65535 ms.');
+  // A zero-displacement mouse event performs no movement, then waits. Always
+  // use its explicit 16-bit duration, avoiding short mouse-delay ambiguities.
+  if (startDelay) out.push(249, 0, 0, 0, startDelay & 255, startDelay >> 8);
   for (const e of events) {
-    const d = Math.min(65535, Math.max(1, Math.round(e.delay)));
-    if (d <= 127) out.push(e.code, (e.down ? 128 : 0) + d);
+    if (e.raw) { out.push(...e.raw); continue; }
+    const d = Math.min(65535, Math.max(0, Math.round(e.delay)));
+    if (d > 0 && d <= 127) out.push(e.code, (e.down ? 128 : 0) + d);
     else out.push(e.code, e.down ? 128 : 0, d & 255, d >> 8);
   }
   if (out.length > MACRO_BYTES - 4) throw new Error(`Macro is too long (${out.length} of ${MACRO_BYTES - 4} bytes).`);
@@ -510,18 +569,22 @@ function encodeMacro(events, repeat) {
 }
 function decodeMacro(b) {
   const repeat = b[0] | (b[1] << 8), events = [];
+  let startDelay = 0;
   for (let i = 2; i < b.length && b[i];) {
     if (b[i] === 249) { // mouse movement: not editable here, kept as an opaque step
-      const d = b[i + 1]; events.push({ raw: b.slice(i, i + (d ? 4 : 6)), delay: d || (b[i + 4] | (b[i + 5] << 8)) }); i += d ? 4 : 6; continue;
+      const d = b[i + 1], delay = d || (b[i + 4] | (b[i + 5] << 8));
+      if (i === 2 && b[i + 2] === 0 && b[i + 3] === 0) startDelay = delay;
+      else events.push({ raw: b.slice(i, i + (d ? 4 : 6)), delay });
+      i += d ? 4 : 6; continue;
     }
     const code = b[i], f = b[i + 1];
     let delay = f & 127;
     if (delay) i += 2; else { delay = b[i + 2] | (b[i + 3] << 8); i += 4; }
     events.push({ code, down: (f & 128) !== 0, delay });
   }
-  return { repeat, events };
+  return { repeat, events, startDelay };
 }
-const macroLength = (events) => 2 + events.reduce((n, e) => n + (e.raw ? e.raw.length : e.delay <= 127 ? 2 : 4), 0);
+const macroLength = (events, startDelay = 0) => 2 + (startDelay > 0 ? 6 : 0) + events.reduce((n, e) => n + (e.raw ? e.raw.length : e.delay > 0 && e.delay <= 127 ? 2 : 4), 0);
 
 // ---------------------------------------------------------------------------
 // Key tables
@@ -631,6 +694,9 @@ const ICONS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  grip: '<path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01"/>',
+  expand: '<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>',
+  collapse: '<path d="M3 8h5V3M21 8h-5V3M8 21v-5H3M16 21v-5h5"/>',
   bamboo: '<g class="f" transform="rotate(12 1475 95)"><use href="#bamboo-stalk" transform="translate(1466 95) scale(.72 1.16) translate(-1466 -95)"/><use href="#bamboo-leaves"/></g>',
 };
 function icon(name) {
@@ -1022,6 +1088,7 @@ function profileNameInput(layer) {
 
 function renderEditor() {
   stopKeyCapture();
+  if (macroDragCleanup) macroDragCleanup();
   if (colourEditor && (state.layer !== 'light' || !state.kb)) closeColourEditor(false);
   const ed = $('editor');
   if (state.layer === 'light' && state.kb && state.light) { ed.replaceChildren(...lightEditor()); return; }
@@ -1151,7 +1218,7 @@ function renderAdvancedSettings() {
   const output = h('output', { htmlFor: 'advancedDebounce' }, String(d.debounce));
   panel.replaceChildren(
     h('p', { class: 'hint advanced-intro' }, 'Device settings, shared by all profiles.'),
-    advancedError ? h('p', { class: 'advanced-error', role: 'alert' }, advancedError) : null,
+    ...(advancedError ? [h('p', { class: 'advanced-error', role: 'alert' }, advancedError)] : []),
     h('fieldset', { class: 'advanced-controls', disabled: advancedSaving },
       h('h3', {}, h('label', { htmlFor: 'advancedDebounce' }, 'Debounce')),
       h('div', { class: 'advanced-debounce' }, h('span', { class: 'hint' }, '1'),
@@ -1689,8 +1756,328 @@ function otherTab(v) {
       h('button', { class: 'danger', disabled: v.every((b) => !b), onclick: () => assign([0, 0, 0, 0]) }, state.layer === 'fn' ? 'Clear' : 'Disable key')));
 }
 
+// --- QMK JSON macro interchange --------------------------------------------
+// Uses the macros field from QMK keymap.json, not a device-specific JSON schema.
+// https://docs.qmk.fm/feature_macros#using-macros-in-json-keymaps
+const QMK_TO_HID = new Map(), HID_TO_QMK = new Map();
+function addQmkKey(code, names) {
+  const aliases = names.split(' ');
+  HID_TO_QMK.set(code, aliases[0]);
+  for (const name of aliases) QMK_TO_HID.set(name, code);
+}
+[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].forEach((key, i) => addQmkKey(4 + i, key));
+[...'1234567890'].forEach((key, i) => addQmkKey(30 + i, key));
+for (let i = 1; i <= 24; i++) addQmkKey(i <= 12 ? 57 + i : 91 + i, `F${i}`);
+[
+  [40, 'ENT ENTER'], [41, 'ESC ESCAPE'], [42, 'BSPC BACKSPACE'], [43, 'TAB'], [44, 'SPC SPACE'],
+  [45, 'MINS MINUS'], [46, 'EQL EQUAL'], [47, 'LBRC LEFT_BRACKET'], [48, 'RBRC RIGHT_BRACKET'],
+  [49, 'BSLS BACKSLASH'], [50, 'NUHS NONUS_HASH'], [51, 'SCLN SEMICOLON'], [52, 'QUOT QUOTE'],
+  [53, 'GRV GRAVE'], [54, 'COMM COMMA'], [55, 'DOT'], [56, 'SLSH SLASH'], [57, 'CAPS CAPS_LOCK'],
+  [70, 'PSCR PRINT_SCREEN'], [71, 'SCRL SCROLL_LOCK'], [72, 'PAUS PAUSE BRK'], [73, 'INS INSERT'],
+  [74, 'HOME'], [75, 'PGUP PAGE_UP'], [76, 'DEL DELETE'], [77, 'END'], [78, 'PGDN PAGE_DOWN'],
+  [79, 'RGHT RIGHT'], [80, 'LEFT'], [81, 'DOWN'], [82, 'UP'], [83, 'NUM NUM_LOCK'],
+  [84, 'PSLS KP_SLASH'], [85, 'PAST KP_ASTERISK'], [86, 'PMNS KP_MINUS'], [87, 'PPLS KP_PLUS'],
+  [88, 'PENT KP_ENTER'], [99, 'PDOT KP_DOT'], [100, 'NUBS NONUS_BACKSLASH'], [101, 'APP APPLICATION'],
+  [103, 'PEQL KP_EQUAL'], [224, 'LCTL LEFT_CTRL CTRL'], [225, 'LSFT LEFT_SHIFT SHIFT'],
+  [226, 'LALT LEFT_ALT LOPT ALT'], [227, 'LGUI LEFT_GUI LWIN LCMD GUI'],
+  [228, 'RCTL RIGHT_CTRL'], [229, 'RSFT RIGHT_SHIFT'], [230, 'RALT RIGHT_ALT ROPT ALGR'],
+  [231, 'RGUI RIGHT_GUI RWIN RCMD'],
+  [240, 'BTN1 MS_BTN1'], [241, 'BTN2 MS_BTN2'], [242, 'BTN3 MS_BTN3'], [243, 'BTN4 MS_BTN4'], [244, 'BTN5 MS_BTN5'],
+].forEach(([code, names]) => addQmkKey(code, names));
+for (let i = 0; i <= 9; i++) addQmkKey(i ? 88 + i : 98, `P${i} KP_${i}`);
+
+function readQmkFile(text) {
+  if (text.length > 1024 * 1024) throw new Error('Choose a QMK JSON file smaller than 1 MB.');
+  let data;
+  try { data = JSON.parse(text.replace(/^\uFEFF/, '')); }
+  catch { throw new Error('This file is not valid JSON. Choose a QMK macro or keymap JSON file.'); }
+  if (!data || !Array.isArray(data.macros) || !data.macros.length || data.macros.length > 32 || !data.macros.every(Array.isArray)) {
+    throw new Error('Expected a QMK JSON object with a macros array containing 1–32 macro arrays.');
+  }
+  return data;
+}
+
+function fromQmkMacro(steps, hostLanguage) {
+  if (!Array.isArray(steps)) throw new Error('The selected QMK macro must be an array.');
+  const events = [];
+  let hasText = false, startDelay = 0;
+  const emit = (code, down) => {
+    events.push({ code, down, delay: 0 });
+    if (events.length > 125) throw new Error('This macro exceeds the AL21’s 252-byte macro limit.');
+  };
+  const tap = codes => {
+    codes.forEach(code => emit(code, true));
+    [...codes].reverse().forEach(code => emit(code, false));
+  };
+  const typeText = text => {
+    hasText ||= text.length > 0;
+    if (text.length && hostLanguage && hostLanguage !== 'us') throw new Error(`Text macros using the “${hostLanguage}” layout are not supported. Use explicit QMK keycodes instead.`);
+    // QMK's default send-string layout is US ANSI. Other layouts need their own translation.
+    const plain = "1234567890-=[]\\;'`,./";
+    const shifted = '!@#$%^&*()_+{}|:"~<>?';
+    const punctuation = [30,31,32,33,34,35,36,37,38,39,45,46,47,48,49,51,52,53,54,55,56];
+    for (const ch of text.replace(/\r\n?/g, '\n')) {
+      if (/^[a-z]$/.test(ch)) tap([ch.charCodeAt(0) - 93]);
+      else if (/^[A-Z]$/.test(ch)) tap([225, ch.charCodeAt(0) - 61]);
+      else if (plain.includes(ch)) tap([punctuation[plain.indexOf(ch)]]);
+      else if (shifted.includes(ch)) tap([225, punctuation[shifted.indexOf(ch)]]);
+      else if (' \n\t\b\x1b\x7f'.includes(ch)) tap([{ ' ': 44, '\n': 40, '\t': 43, '\b': 42, '\x1b': 41, '\x7f': 76 }[ch]]);
+      else throw new Error(`Cannot import the text character “${ch}”. Use basic QMK keycodes or US ASCII text.`);
+    }
+  };
+  for (const step of steps) {
+    if (typeof step === 'string') { typeText(step); continue; }
+    if (!step || typeof step !== 'object' || Array.isArray(step)) throw new Error('Each QMK macro step must be text or an action object.');
+    if (step.action === 'delay') {
+      if (!Number.isInteger(step.duration) || step.duration < 0 || step.duration > 65535) throw new Error('AL21 delays must be whole milliseconds between 0 and 65535.');
+      if (!step.duration) continue;
+      if (!events.length) {
+        startDelay += step.duration;
+        if (startDelay > 65535) throw new Error('Start delay cannot exceed 65535 ms.');
+        continue;
+      }
+      const last = events[events.length - 1];
+      last.delay += step.duration;
+      if (last.delay > 65535) throw new Error('Consecutive delays cannot exceed 65535 ms on the AL21.');
+    } else if (['down', 'up', 'tap'].includes(step.action)) {
+      if (!Array.isArray(step.keycodes) || !step.keycodes.length) throw new Error('A QMK key action needs a non-empty keycodes array.');
+      const codes = step.keycodes.map(key => {
+        const code = typeof key === 'string' ? QMK_TO_HID.get(key.replace(/^KC_/, '')) : undefined;
+        if (code === undefined) throw new Error(`Unsupported QMK keycode: ${String(key).slice(0, 60)}.`);
+        return code;
+      });
+      if (step.action === 'tap') tap(codes);
+      else codes.forEach(code => emit(code, step.action === 'down'));
+    } else throw new Error(`Unsupported QMK action: ${String(step.action).slice(0, 60)}. The AL21 supports down, up, tap, and delay.`);
+  }
+  if (!events.length) throw new Error('This macro has no key events to import.');
+  encodeMacro(events, 1, startDelay); // Validate the actual device buffer, including extended delays.
+  return { events, startDelay, hasText };
+}
+
+function toQmkMacro(events, startDelay = 0) {
+  if (!events.length) throw new Error('Add or record macro steps before exporting.');
+  const steps = [];
+  if (!Number.isInteger(startDelay) || startDelay < 0 || startDelay > 65535) throw new Error('Start delay must be between 0 and 65535 ms.');
+  if (startDelay) steps.push({ action: 'delay', duration: startDelay });
+  for (const event of events) {
+    const key = HID_TO_QMK.get(event.code);
+    if (event.raw || !key) throw new Error('This macro contains mouse movement or an unsupported key that cannot be exported to QMK JSON.');
+    if (typeof event.down !== 'boolean' || !Number.isInteger(event.delay) || event.delay < 0 || event.delay > 65535) throw new Error('Each step needs a whole delay between 0 and 65535 ms before export.');
+    steps.push({ action: event.down ? 'down' : 'up', keycodes: [key] }, { action: 'delay', duration: event.delay });
+  }
+  return { macros: [steps] };
+}
+
+function applyQmkImport(d, data, index, filename) {
+  const result = fromQmkMacro(data.macros[index], data.host_language);
+  const name = filename.replace(/(?:\.qmk)?\.json$/i, '') + (data.macros.length > 1 ? ` — Macro ${index + 1}` : '');
+  Object.assign(d, { slot: null, loaded: true, mode: 0, repeat: 1, name, events: result.events, startDelay: result.startDelay, qmkImport: null,
+    importHint: [
+      'Imported as a new macro. Review it, then save to this key.',
+      result.hasText ? 'Text was converted using the US keyboard layout.' : '',
+    ].filter(Boolean).join(' ') });
+}
+
+async function importQmkFile(file, d) {
+  if (!file) return;
+  try {
+    if (file.size > 1024 * 1024) throw new Error('Choose a QMK JSON file smaller than 1 MB.');
+    const data = readQmkFile(await file.text());
+    if (state.macroDraft !== d || state.tab !== 'macro') return;
+    if (data.macros.length === 1) applyQmkImport(d, data, 0, file.name);
+    else d.qmkImport = { data, filename: file.name, index: 0 };
+    renderEditor();
+  } catch (error) { toast(error.message, 'err'); }
+}
+
+function exportQmkFile(d) {
+  try {
+    const text = JSON.stringify(toQmkMacro(d.events, d.startDelay || 0), null, 2) + '\n';
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const name = (d.name || 'macro').replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').slice(0, 100);
+    const link = h('a', { href: url, download: `${name}.qmk.json` });
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Exported QMK steps and delays. Names and playback settings are not included.');
+  } catch (error) { toast(error.message, 'err'); }
+}
+
 // --- Macro editor ----------------------------------------------------------
 let recording = null;
+let macroTableExpanded = false, macroDragCleanup = null;
+const macroDelay = value => Math.min(65535, Math.max(0, Math.round(Number(value) || 0)));
+const macroTime = milliseconds => `${(milliseconds / 1000).toFixed(3)} s`;
+function macroTimeline(events, startDelay = 0) {
+  let duration = macroDelay(startDelay);
+  const times = events.map(event => { const time = duration; duration += macroDelay(event.delay); return time; });
+  return { times, duration };
+}
+function moveMacroEvent(draft, from, to) {
+  const events = draft.events;
+  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || from >= events.length || to < 0 || to >= events.length || from === to) return false;
+  // Pair each event with its displayed before-delay, then translate the reordered
+  // pairs back to the device's after-delay representation. Preserve the end delay.
+  if (events.some(event => event.raw)) return false;
+  const endDelay = events[events.length - 1].delay;
+  const steps = events.map((event, index) => ({ event, before: index ? events[index - 1].delay : draft.startDelay || 0 }));
+  const [step] = steps.splice(from, 1);
+  steps.splice(to, 0, step);
+  draft.startDelay = steps[0].before;
+  events.splice(0, events.length, ...steps.map(step => step.event));
+  events.forEach((event, index) => { event.delay = index + 1 < steps.length ? steps[index + 1].before : endDelay; });
+  return true;
+}
+function refreshMacroSequence(d, focusIndex) {
+  const scrollTop = $('macroEventList')?.scrollTop || 0;
+  renderEditor();
+  if (state.macroDraft !== d) return;
+  const list = $('macroEventList');
+  if (!list) return;
+  list.scrollTop = scrollTop;
+  if (focusIndex != null) {
+    const handle = list.querySelectorAll('.macro-grip')[focusIndex];
+    handle?.focus({ preventScroll: true });
+    handle?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+function reorderMacroEvent(d, from, to) {
+  if (recording || state.macroDraft !== d || !moveMacroEvent(d, from, to)) return;
+  d.reorderNotice = `Step ${from + 1} moved to position ${to + 1}.`;
+  refreshMacroSequence(d, to);
+}
+function beginMacroDrag(event, d, from, rows, list) {
+  if (recording || event.button !== 0 || !event.isPrimary || d.events.length < 2 || d.events.some(event => event.raw)) return;
+  event.preventDefault();
+  if (macroDragCleanup) macroDragCleanup();
+  const handle = event.currentTarget, pointerId = event.pointerId;
+  let active = false, boundary = from, y = event.clientY, frame = 0;
+  const clearMarkers = () => rows.forEach(row => row.classList.remove('drop-before', 'drop-after'));
+  const markTarget = () => {
+    clearMarkers();
+    const next = rows.findIndex(row => { const rect = row.getBoundingClientRect(); return y < rect.top + rect.height / 2; });
+    boundary = next < 0 ? rows.length : next;
+    if (boundary === from || boundary === from + 1) return;
+    rows[Math.min(boundary, rows.length - 1)].classList.add(boundary === rows.length ? 'drop-after' : 'drop-before');
+  };
+  const tick = () => {
+    if (!active) return;
+    if (!handle.isConnected) { cleanup(); return; }
+    if (!macroTableExpanded) {
+      const rect = list.getBoundingClientRect();
+      const top = Math.max(0, rect.top + 35), bottom = Math.min(window.innerHeight, rect.bottom);
+      const delta = y < top + 28 ? -8 : y > bottom - 28 ? 8 : 0;
+      if (delta) list.scrollTop += delta;
+    }
+    if (y < 45) window.scrollBy(0, -9);
+    else if (y > window.innerHeight - 45) window.scrollBy(0, 9);
+    markTarget();
+    frame = requestAnimationFrame(tick);
+  };
+  const move = ev => {
+    if (ev.pointerId !== pointerId) return;
+    y = ev.clientY;
+    if (!active && Math.hypot(ev.clientX - event.clientX, y - event.clientY) >= 5) {
+      active = true; rows[from].classList.add('dragging'); frame = requestAnimationFrame(tick);
+    }
+    if (active) { ev.preventDefault(); markTarget(); }
+  };
+  const cleanup = () => {
+    active = false; cancelAnimationFrame(frame);
+    clearMarkers(); rows[from].classList.remove('dragging');
+    handle.removeEventListener('pointermove', move);
+    handle.removeEventListener('pointerup', finish);
+    handle.removeEventListener('pointercancel', cancel);
+    handle.removeEventListener('lostpointercapture', cancel);
+    document.removeEventListener('keydown', escape);
+    if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId);
+    if (macroDragCleanup === cleanup) macroDragCleanup = null;
+  };
+  const finish = ev => {
+    if (ev.pointerId !== pointerId) return;
+    const shouldMove = active, to = boundary > from ? boundary - 1 : boundary;
+    cleanup();
+    if (shouldMove) reorderMacroEvent(d, from, to);
+  };
+  const cancel = ev => { if (ev.pointerId === pointerId) cleanup(); };
+  const escape = ev => { if (ev.key === 'Escape') { ev.preventDefault(); cleanup(); } };
+  handle.addEventListener('pointermove', move);
+  handle.addEventListener('pointerup', finish);
+  handle.addEventListener('pointercancel', cancel);
+  handle.addEventListener('lostpointercapture', cancel);
+  document.addEventListener('keydown', escape);
+  handle.setPointerCapture(pointerId);
+  macroDragCleanup = cleanup;
+}
+function renderMacroSequence(d) {
+  const timeline = macroTimeline(d.events, d.startDelay);
+  const lastEvent = d.events[d.events.length - 1];
+  const hasRawSteps = d.events.some(event => event.raw);
+  const summary = h('div', { class: 'macro-summary' }, `${d.events.length} steps · ${macroTime(timeline.duration)} total`);
+  const list = h('div', { id: 'macroEventList', class: 'macro-list' });
+  const atCells = [];
+  const endAt = h('span', { class: 'macro-end-at' }, macroTime(timeline.duration));
+  const updateTiming = () => {
+    const next = macroTimeline(d.events, d.startDelay);
+    atCells.forEach((cell, index) => { cell.textContent = macroTime(next.times[index]); });
+    endAt.textContent = macroTime(next.duration);
+    summary.textContent = `${d.events.length} steps · ${macroTime(next.duration)} total`;
+    const bytes = macroLength(d.events, d.startDelay);
+    if ($('macroBytes')) $('macroBytes').textContent = `${bytes} / ${MACRO_BYTES - 4} bytes`;
+    if ($('macroSave')) $('macroSave').disabled = bytes > MACRO_BYTES - 4;
+  };
+  const rows = d.events.map((e, i) => {
+    const key = e.raw ? 'Mouse move' : KEY_BY_HID.get(e.code)?.label ?? MOUSE_CODES[e.code] ?? '0x' + e.code.toString(16);
+    const action = e.raw ? 'Move' : e.down ? 'Press' : 'Release';
+    const at = h('span', { class: 'macro-at' }, macroTime(timeline.times[i]));
+    atCells.push(at);
+    const grip = h('button', { type: 'button', class: 'macro-grip', disabled: !!recording || hasRawSteps,
+      ariaLabel: `Move step ${i + 1}: ${key} ${action.toLowerCase()}`,
+      title: 'Drag to reorder, or use the Up and Down arrow keys',
+      onpointerdown: ev => beginMacroDrag(ev, d, i, rows, list),
+      onkeydown: ev => {
+        const to = { ArrowUp: i - 1, ArrowDown: i + 1, Home: 0, End: d.events.length - 1 }[ev.key];
+        if (to === undefined) return;
+        ev.preventDefault(); reorderMacroEvent(d, i, to);
+      } }, icon('grip'));
+    return h('tr', {},
+      h('td', {}, h('div', { class: 'macro-step' }, grip, h('span', {}, String(i + 1)))),
+      h('td', {}, h('div', { class: 'macro-event' }, h('kbd', { class: 'macro-key' }, key),
+        h('span', { class: `macro-action${e.down && !e.raw ? ' press' : ''}` }, e.raw ? null : icon(e.down ? 'arrowDown' : 'arrowUp'), action))),
+      h('td', {}, h('div', { class: 'macro-delay' }, h('input', { type: 'number', min: 0, max: 65535, step: 1, value: i === 0 ? d.startDelay || 0 : d.events[i - 1].delay,
+        disabled: !!recording || !!d.events[i - 1]?.raw,
+        title: i === 0 ? 'Pause before the first event' : 'Pause before this event',
+        ariaLabel: `Delay before step ${i + 1}, in milliseconds`,
+        onchange: ev => { const delay = macroDelay(ev.target.value); if (i === 0) d.startDelay = delay; else d.events[i - 1].delay = delay; ev.target.value = delay; updateTiming(); } }), h('span', {}, 'ms'))),
+      h('td', {}, at),
+      h('td', {}, h('button', { type: 'button', class: 'macro-remove', title: `Remove step ${i + 1}`, ariaLabel: `Remove step ${i + 1}`, disabled: !!recording,
+        onclick: () => { d.events.splice(i, 1); refreshMacroSequence(d, Math.min(i, d.events.length - 1)); } }, icon('close'))));
+  });
+  list.append(h('table', { ariaLabel: 'Macro sequence' },
+    h('colgroup', {}, ['macro-step-col', '', 'macro-delay-col', 'macro-time-col', 'macro-remove-col'].map(className => h('col', { class: className }))),
+    h('thead', {}, h('tr', {}, ['Step', 'Key / action', 'Delay before', 'At'].map(label => h('th', { scope: 'col', title: label === 'At' ? 'Time from the start of one playback' : label === 'Delay before' ? 'Pause before this event' : '' }, label)), h('th', { scope: 'col' }, h('span', { class: 'sr-only' }, 'Remove')))),
+    h('tbody', {}, rows.length ? rows : h('tr', { class: 'macro-empty' }, h('td', { colSpan: 5 },
+      h('strong', {}, d.slot != null && !d.loaded ? 'Loading macro…' : 'No steps yet'),
+      h('span', { class: 'hint' }, d.slot != null && !d.loaded ? 'Reading the sequence from your numpad.' : 'Record keystrokes or add a step to get started.')))),
+    lastEvent ? h('tfoot', {}, h('tr', {},
+      h('td', {}), h('td', {}, h('label', { htmlFor: 'macroEndDelay' }, 'End delay')),
+      h('td', {}, h('div', { class: 'macro-delay' },
+        h('input', { id: 'macroEndDelay', type: 'number', min: 0, max: 65535, step: 1, value: lastEvent.delay, disabled: !!recording || !!lastEvent.raw,
+          ariaLabel: 'Delay after the last event, in milliseconds', title: 'Pause after the last event, including before the next repeat',
+          onchange: ev => { const last = d.events[d.events.length - 1]; last.delay = macroDelay(ev.target.value); ev.target.value = last.delay; updateTiming(); } }), h('span', {}, 'ms'))),
+      h('td', {}, endAt), h('td', {}))) : null));
+  return h('div', { class: `macro-sequence${macroTableExpanded ? ' expanded' : ''}` },
+    h('div', { class: 'macro-sequence-head' }, h('div', {}, h('h3', {}, 'Sequence'), summary),
+      h('button', { type: 'button', class: 'macro-expand', disabled: !d.events.length, ariaExpanded: String(macroTableExpanded), ariaControls: 'macroEventList',
+        title: macroTableExpanded ? 'Use a compact, scrollable table' : 'Show all steps and scroll with the page',
+        onclick: () => {
+          macroTableExpanded = !macroTableExpanded;
+          refreshMacroSequence(d);
+          $('editor').querySelector('.macro-expand')?.focus({ preventScroll: true });
+        } }, icon(macroTableExpanded ? 'collapse' : 'expand'), macroTableExpanded ? 'Collapse' : 'Expand')),
+    list,
+    h('span', { class: 'sr-only', role: 'status', ariaLive: 'polite' }, d.reorderNotice || ''));
+}
 function macroTab(v) {
   const used = usedMacroSlots();
   if (!state.macroDraft) {
@@ -1699,45 +2086,61 @@ function macroTab(v) {
   }
   const d = state.macroDraft;
   const slotSel = h('select', { onchange: () => { const s = slotSel.value === 'new' ? null : Number(slotSel.value); state.macroDraft = { slot: s, mode: d.mode, repeat: 1, events: [], name: s == null ? '' : macroName(s) }; if (s != null) loadMacroInto(s); else renderEditor(); } },
-    h('option', { value: 'new', selected: d.slot == null }, 'New macro'),
+    h('option', { value: 'new', selected: d.slot == null }, 'New Macro'),
     [...used].sort((a, b) => a - b).map((s) => h('option', { value: s, selected: d.slot === s }, macroName(s))));
-  const rows = d.events.map((e, i) => h('tr', {},
-    h('td', {}, e.raw ? 'Mouse move' : `${KEY_BY_HID.get(e.code)?.label ?? MOUSE_CODES[e.code] ?? '0x' + e.code.toString(16)} ${e.down ? '↓' : '↑'}`),
-    h('td', {}, h('input', { type: 'number', min: 1, max: 65535, value: e.delay, onchange: (ev) => { e.delay = Math.max(1, Number(ev.target.value) || 1); renderEditor(); } }), ' ms'),
-    h('td', {}, h('button', { class: 'x', title: 'Remove', onclick: () => { d.events.splice(i, 1); renderEditor(); } }, '✕'))));
-  const len = macroLength(d.events);
+  const len = macroLength(d.events, d.startDelay);
   const recBtn = h('button', { class: recording ? 'rec' : '', onclick: toggleRecord }, recording ? '■ Stop recording' : '● Record');
   const addSel = h('select', {}, h('option', { value: '' }, 'Add step…'),
     h('optgroup', { label: 'Mouse' }, Object.entries(MOUSE_CODES).map(([c, n]) => h('option', { value: 'm' + c }, `${n} (press + release)`))),
     [...new Set(KEYS.map((k) => k.group))].map((g) => h('optgroup', { label: g }, KEYS.filter((k) => k.group === g).map((k) => h('option', { value: 'k' + k.hid }, `${k.label} (press + release)`)))));
   addSel.onchange = () => {
     const code = Number(addSel.value.slice(1));
-    if (code) d.events.push({ code, down: true, delay: 20 }, { code, down: false, delay: 20 });
+    if (code) d.events.push({ code, down: true, delay: 20 }, { code, down: false, delay: 0 });
     renderEditor();
   };
-  const fixed = h('input', { type: 'number', min: 1, value: 20, style: { width: '76px' } });
+  const fixed = h('input', { type: 'number', min: 0, value: 20, style: { width: '76px' } });
+  const importing = d.qmkImport;
+  const fileInput = h('input', { type: 'file', accept: '.json,application/json', hidden: true,
+    onchange: ev => importQmkFile(ev.target.files[0], d) });
+  const loading = d.slot != null && !d.loaded;
   return h('div', {},
-    h('div', { class: 'row' }, slotSel, h('input', { type: 'text', placeholder: 'Name', value: d.name, oninput: (e) => (d.name = e.target.value) })),
-    h('div', { class: 'row' }, recBtn, addSel, h('button', { disabled: !d.events.length, onclick: () => { d.events = []; renderEditor(); } }, 'Clear')),
+    fileInput,
+    h('div', { class: 'macro-controls' },
+      h('div', { class: 'macro-name-row' }, slotSel,
+        h('input', { type: 'text', placeholder: 'Name', ariaLabel: 'Macro name', value: d.name, oninput: (e) => (d.name = e.target.value) })),
+      h('button', { class: 'macro-import', disabled: !!recording || loading, onclick: () => { fileInput.value = ''; fileInput.click(); } }, 'Import QMK'),
+    importing ? h('div', { class: 'row macro-import-options' },
+      h('select', { ariaLabel: 'Macro from QMK file', disabled: !!recording, onchange: ev => { importing.index = Number(ev.target.value); } },
+        importing.data.macros.map((steps, index) => h('option', { value: index, selected: index === importing.index }, `Macro ${index + 1} · QK_MACRO_${index}${steps.length ? '' : ' (empty)'}`))),
+      h('button', { disabled: !!recording, onclick: () => {
+        try { applyQmkImport(d, importing.data, importing.index, importing.filename); renderEditor(); }
+        catch (error) { toast(error.message, 'err'); }
+      } }, 'Load macro'),
+      h('button', { onclick: () => { d.qmkImport = null; renderEditor(); } }, 'Cancel')) : null,
+    d.importHint ? h('p', { class: 'hint macro-import-hint', role: 'status' }, d.importHint) : null,
+    h('div', { class: 'row macro-record-row' }, recBtn, addSel, h('button', { disabled: !d.events.length, onclick: () => { d.events = []; d.startDelay = 0; renderEditor(); } }, 'Clear'))),
     recording ? h('p', { class: 'hint' }, 'Type the keystrokes now. Timing between keys is recorded. Click Stop when done.') : null,
-    d.events.length ? h('div', { class: 'macro-list' }, h('table', {}, rows)) : h('p', { class: 'hint' }, d.slot != null && !d.loaded ? 'Loading macro…' : 'No steps yet. Record keystrokes or add steps.'),
+    renderMacroSequence(d),
     h('div', { class: 'row' }, h('span', { class: 'hint' }, 'Set every delay to'), fixed, h('span', { class: 'hint' }, 'ms'),
-      h('button', { disabled: !d.events.length, onclick: () => { d.events.forEach((e) => (e.delay = Math.max(1, Number(fixed.value) || 1))); renderEditor(); } }, 'Apply')),
+      h('button', { disabled: !d.events.length || !!recording, onclick: () => { d.startDelay = macroDelay(fixed.value); d.events.forEach((e) => { if (!e.raw) e.delay = macroDelay(fixed.value); }); refreshMacroSequence(d); } }, 'Apply')),
     h('div', { class: 'row' },
       h('select', { onchange: (e) => { d.mode = Number(e.target.value); renderEditor(); } }, MACRO_MODES.map(([m, t]) => h('option', { value: m, selected: d.mode === m }, t))),
       d.mode === 0 ? [h('input', { type: 'number', min: 1, max: 65535, value: d.repeat, style: { width: '76px' }, onchange: (e) => (d.repeat = Math.max(1, Number(e.target.value) || 1)) }), h('span', { class: 'hint' }, 'times')] : null),
-    h('div', { class: 'row' },
-      h('button', { class: 'primary', disabled: !d.events.length || len > MACRO_BYTES - 4, onclick: saveMacro }, 'Save macro to this key'),
-      h('span', { class: `bytes` }, `${len} / ${MACRO_BYTES - 4} bytes`)),
     d.slot != null && macroUsers(d.slot).some(([l, s]) => l !== state.layer || s !== state.sel.slot)
-      ? h('p', { class: 'hint' }, 'This macro is also used by other keys; saving changes it for them too.') : null);
+      ? h('p', { class: 'hint' }, 'This macro is also used by other keys; saving changes it for them too.') : null,
+    h('div', { class: 'macro-footer' },
+      h('div', { class: 'macro-save-group' },
+        h('button', { id: 'macroSave', class: 'primary', disabled: !d.events.length || len > MACRO_BYTES - 4, onclick: saveMacro }, 'Save Macro to key'),
+        h('span', { id: 'macroBytes', class: 'bytes' }, `${len} / ${MACRO_BYTES - 4} bytes`)),
+      h('button', { disabled: !!recording || loading || !d.events.length, onclick: () => exportQmkFile(d) }, 'Export QMK')));
 }
 const macroUsers = (slot) => layers().flatMap((l) => [...Array(64).keys()].filter((s) => { const x = slotValue(l, s); return x[0] === 9 && x[2] === slot; }).map((s) => [l, s]));
 async function loadMacroInto(slot) {
+  const draft = state.macroDraft;
   await busy('Reading macro…', async () => {
     const m = decodeMacro(await state.kb.readMacro(slot));
-    if (state.macroDraft?.slot !== slot) return;
-    Object.assign(state.macroDraft, { events: m.events, repeat: Math.max(1, m.repeat), loaded: true });
+    if (state.macroDraft !== draft || draft.slot !== slot) return;
+    Object.assign(state.macroDraft, { events: m.events, startDelay: m.startDelay, repeat: Math.max(1, m.repeat), loaded: true });
   });
   renderEditor();
 }
@@ -1757,8 +2160,8 @@ function toggleRecord() {
     if (!k) return;
     e.preventDefault();
     const now = performance.now();
-    if (last) last.delay = Math.max(1, Math.min(65535, Math.round(now - last.t)));
-    last = { code: k.hid, down: e.type === 'keydown', delay: 20, t: now };
+    if (last) last.delay = Math.max(0, Math.min(65535, Math.round(now - last.t)));
+    last = { code: k.hid, down: e.type === 'keydown', delay: 0, t: now };
     d.events.push(last);
     renderEditor();
   };
@@ -1776,12 +2179,12 @@ function saveMacro() {
     slot =[...Array(MACRO_SLOTS).keys()].find((s) => !used.has(s));
     if (slot == null) return toast('All 50 macro slots are in use.', 'err');
   }
-  const buf = (() => { try { return encodeMacro(d.events.filter((e) => !e.raw), d.mode === 0 ? d.repeat : 1); } catch (e) { toast(e.message, 'err'); } })();
+  const buf = (() => { try { return encodeMacro(d.events, d.mode === 0 ? d.repeat : 1, d.startDelay || 0); } catch (e) { toast(e.message, 'err'); } })();
   if (!buf) return;
   return busy('Saving macro…', async () => {
     await state.kb.writeMacro(slot, buf);
     const back = await state.kb.readMacro(slot);
-    const n = macroLength(d.events.filter((e) => !e.raw));
+    const n = macroLength(d.events, d.startDelay);
     if (!eq(back.slice(0, n), buf.slice(0, n))) throw new Error('The numpad did not store the macro correctly.');
     const names = macroNames();
     names[slot] = d.name.trim() || names[slot] || `Macro ${slot + 1}`;
