@@ -642,7 +642,11 @@ class AL21 {
     const r = await this.command([0x8f]);
     return r[0] === 0x8f ? new DataView(r.buffer, r.byteOffset).getUint32(1, true) : undefined;
   }
-  async getProfile() { return (await this.command([0x84]))[1]; }
+  async getProfile() {
+    const r = await this.command([0x84]);
+    if (r[0] !== 0x84 || !Number.isInteger(r[1]) || r[1] < 0 || r[1] >= PROFILES) throw new Error('Could not read the active profile from the numpad.');
+    return r[1];
+  }
   setProfile(p) { return this.write([0x04, p]); }
 
   async getDebounce() {
@@ -1071,14 +1075,31 @@ let pollTimer;
 function pollStatus() {
   clearTimeout(pollTimer);
   pollTimer = setTimeout(async () => {
-    if (!state.kb) return;
+    const kb = state.kb;
+    if (!kb) return;
     try {
-      const s = await state.kb.status();
+      const s = await kb.status();
+      if (state.kb !== kb) return;
       state.online = s.online; state.battery = s.battery;
       renderStatus();
+      if (s.online) {
+        const active = await kb.getProfile();
+        if (state.kb !== kb) return;
+        if (active !== state.active) {
+          // Follow hardware changes while viewing the active profile. Keep an
+          // independently selected profile, Fn layer or lighting editor open.
+          if (state.layer === state.active) {
+            state.layer = active;
+            state.keyDraft = null;
+            state.macroDraft = null;
+          }
+          state.active = active;
+          render();
+        }
+      }
     } catch { /* transient */ }
-    pollStatus();
-  }, 4000);
+    if (state.kb === kb) pollStatus();
+  }, 250);
 }
 navigator.hid?.addEventListener('disconnect', (e) => {
   if (state.kb && e.device === state.kb.dev) {
